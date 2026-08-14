@@ -34,7 +34,13 @@ const AGENTS = {
   minimax: { base: 'https://api.minimax.chat/v1', key: 'MINIMAX_API_KEY', model: 'abab6.5s-chat' },
 };
 
+const LOG_MAX_BYTES = 2 * 1024 * 1024; // 2MB
+
 function log(msg) {
+  try {
+    const stat = fs.statSync(LOG);
+    if (stat.size > LOG_MAX_BYTES) fs.truncateSync(LOG, 0);
+  } catch {}
   try { fs.appendFileSync(LOG, `${new Date().toISOString()} ${msg}\n`); } catch {}
 }
 
@@ -150,7 +156,7 @@ process.stdin.on('data', (chunk) => {
   while ((i = buf.indexOf('\n')) >= 0) {
     const line = buf.slice(0, i).trim();
     buf = buf.slice(i + 1);
-    if (line) handle(line);
+    if (line) handle(line).catch((e) => log(`unhandled: ${e.message}`));
   }
 });
 
